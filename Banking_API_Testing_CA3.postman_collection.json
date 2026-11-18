@@ -1,0 +1,329 @@
+{
+  "info": {
+    "name": "Banking API Testing - CA3",
+    "description": "Functional, boundary and negative tests for the CA3 Banking API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accountId",
+      "value": "1001"
+    },
+    {
+      "key": "unknownAccountId",
+      "value": "999999"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Create account",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Rahul\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('Account is created with zero balance', () => { pm.expect(d.name).to.eql('Rahul'); pm.expect(d.balance).to.eql(0); });",
+              "pm.collectionVariables.set('accountId', d.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Deposit 5000",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/deposit",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\":5000}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Deposit returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Balance is 5000', () => pm.expect(pm.response.json().balance).to.eql(5000));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Withdraw 1000",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/withdraw",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\":1000}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Withdrawal returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Balance is 4000', () => pm.expect(pm.response.json().balance).to.eql(4000));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Get balance",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/balance"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Balance request returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Balance is 4000', () => pm.expect(Number(pm.response.text())).to.eql(4000));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Negative deposit",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/deposit",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\":-500}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Negative amount returns 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Zero deposit",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/deposit",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\":0}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Zero amount returns 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Insufficient funds",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/withdraw",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\":10000}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Insufficient funds returns 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Unknown account",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/accounts/{{unknownAccountId}}/balance"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Unknown account returns 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Missing amount",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts/{{accountId}}/deposit",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Missing amount returns 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Blank account name",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/accounts",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"   \"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Blank name returns 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
